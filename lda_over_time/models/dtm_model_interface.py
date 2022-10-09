@@ -3,11 +3,6 @@ DtmModelInterface is an interface to create new DTM modules, these modules
 should train the model and return values to front end.
 """
 
-from lda_over_time.errors.not_implemented import NotImplemented
-
-import inspect
-
-
 class DtmModelInterface:
     """
     DtmModelInterface defines methods and attributes that a module should have \
@@ -49,11 +44,7 @@ class DtmModelInterface:
         :rtype: int
 
         """
-        # Get method's name
-        method_name = inspect.currentframe().f_code.co_name
-
-        # It was not overwritten by child: raise exception
-        raise NotImplemented(method_name)
+        pass
 
 
     def get_results(self):
@@ -68,11 +59,7 @@ class DtmModelInterface:
         :rtype: pandas.core.frame.DataFrame
 
         """
-        # Get method's name
-        method_name = inspect.currentframe().f_code.co_name
-
-        # It was not overwritten by child: raise exception
-        raise NotImplemented(method_name)
+        pass
 
 
     def get_topic_words(self, topic_id, i, n):
@@ -96,11 +83,7 @@ class DtmModelInterface:
         :rtype: list[str]
 
         """
-        # Get method's name
-        method_name = inspect.currentframe().f_code.co_name
-
-        # It was not overwritten by child: raise exception
-        raise NotImplemented(method_name)
+        pass
 
 
     def prepare_args(self, i):
@@ -116,21 +99,10 @@ class DtmModelInterface:
         :rtype: dict[str, any]
 
         """
-        # Get method's name
-        method_name = inspect.currentframe().f_code.co_name
-
-        # It was not overwritten by child: raise exception
-        raise NotImplemented(method_name)
+        pass
 
 
-    def train(self,
-              corpus,
-              dates,
-              date_format,
-              freq,
-              n_topics=100,
-              sep=None,
-              workers=None):
+    def train(self):
         """
         This method should train the dtm model.
 
@@ -138,8 +110,4 @@ class DtmModelInterface:
         :rtype: None
 
         """
-        # Get method's name
-        method_name = inspect.currentframe().f_code.co_name
-
-        # It was not overwritten by child: raise exception
-        raise NotImplemented(method_name)
+        pass
