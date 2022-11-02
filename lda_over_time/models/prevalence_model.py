@@ -13,16 +13,11 @@ from lda_over_time.models.dtm_model_interface import DtmModelInterface
 from multiprocessing import cpu_count
 from pyLDAvis.gensim_models import _extract_data as extract_data
 
-import logging
 import pandas as pd
-import warnings
 
 
 # TYPING
 from typing import List, Optional
-
-
-warnings.filterwarnings("ignore")
 
 
 class PrevalenceModel(DtmModelInterface):
@@ -91,9 +86,6 @@ class PrevalenceModel(DtmModelInterface):
 
         # get number of parallel workers
         self.workers = workers if isinstance(workers, int) else cpu_count()
-
-        # Silence PyLdaVis
-        logging.getLogger("extract_data").setLevel(logging.ERROR)
 
 
     def __normalize_lda_model(self, corpus, lda_model):

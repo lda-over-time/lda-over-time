@@ -1,12 +1,11 @@
 """
-LdaOverTime is a framework that brings an easier way of finding topics \
-in a set of documents and to create a visualization of the topics evolution \
-over time. It is based on Temporal LDA techniques.
+LdaOverTime is a framework that brings an easier way of doing Topic Modeling \
+Analysis Over Time and get visualization of results.
 
-The goal is to allow user to select the best algorithm (model) to approach \
-his problem and, by giving simple parameters as the list of texts and a list \
-of timestamps, the user can get the results of DTM analysis that are easier to \
-interpretate.
+In brief, Topic Modeling is a technique that finds topics that each document \
+from a collection covers. And, by addind the time in this equation, we can \
+study how much and why one certain topic is more or less discussed in a \
+time slice.
 """
 # IMPORTS
 import matplotlib.pyplot as plt
@@ -87,22 +86,26 @@ class LdaOverTime:
         weights = results[list(range(self.n_topics))]
 
         # get dates
-        dates = results['date'].dt.date
+        dates = results['date'].dt.date.values
 
         # return dates and weights
         return results, dates, weights
 
 
     def plot(self,
-             legend_title: str,
+             title: str,
+             legend_title: Optional[str] = None,
              topic_names: Optional[List[str]] = None,
              path_to_save: Optional[str] = None,
              display: bool = True):
         """
         Plot the evolution of topics over time.
 
+        :param title: title of plot
+        :type title: str
+
         :param legend_title: legend's title
-        :type legend_title: str
+        :type legend_title: str, optional
 
         :param topic_names: custom names for each topic. If not provided, it \
         will be the top 10 words for each topic.
@@ -123,13 +126,21 @@ class LdaOverTime:
         if topic_names is None:
             topic_names = self.topics_names
 
+        # TODO: find a way of setting label names without breaking markers
+        # Topic names has the right length: set new column names
+        if self.weights.shape[1] == len(topic_names):
+            self.weights.columns = topic_names
+
         # Plot
-        g = sns.lineplot(data=self.weights, legend=False)
+        g = sns.lineplot(data=self.weights)
+        g.set_xticks(range(len(self.dates)))
         g.set_xticklabels(labels=self.dates, rotation=30)
+
+        plt.title(title)
+
         plt.legend(title=legend_title,
                    bbox_to_anchor=(1,1),
-                   loc="upper left",
-                   labels=self.topics_names)
+                   loc="upper left")
 
         # Path was given: save plot in path
         if isinstance(path_to_save, str):
@@ -214,7 +225,7 @@ class LdaOverTime:
         requested topic in a specific time.
         :rtype: list[str]
         """
-        return self.model.get_topic_words(topic_id, timeslice, n)
+        return self.model.get_topic_words(topic_id - 1, timeslice, n)
 
 
     def get_results(self) -> pd.DataFrame:
@@ -239,7 +250,7 @@ class LdaOverTime:
         results = self.model.get_results()
 
         # Change columns to number topics from 1 to n_topics
-        results.columns = ['date'] + list(range(1, self.n_topics + 1))
+        results.columns = list(range(1, self.n_topics + 1)) + ['date']
 
         # Return table
         return results
