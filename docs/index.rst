@@ -1,5 +1,5 @@
 .. lda-over-time documentation master file, created by
-   sphinx-quickstart on Wed Sep 21 08:13:03 2022.
+   sphinx-quickstart on Sat Oct 29 18:27:43 2022.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
