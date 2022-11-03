@@ -12,7 +12,7 @@ Subpackages
 Submodules
 ----------
 
-lda\_over\_time.lda\_over\_time module lalala
+lda\_over\_time.lda\_over\_time module
 --------------------------------------
 
 .. automodule:: lda_over_time.lda_over_time
