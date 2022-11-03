@@ -184,7 +184,9 @@ class LdaOverTime:
     def showvis(self, time_id: int):
         """
         Show the PyLdaVis analysis of your model in a specific time slice. \
-        It is useful to evaluate how good is your model.
+        It is useful to evaluate how good your model is.
+
+        *This method is only available inside jupyter notebooks.*
 
         :param time_id: Position of the time slice from 1 to n_timeslices in \
         chronological order

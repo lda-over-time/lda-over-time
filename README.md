@@ -30,10 +30,11 @@ pip install lda-over-time
 
 ## Tutorial
 You can check out the library's tutorial and small example of usage at 
-[notebooks/tutorial.ipynb](./notebooks/tutorial.ipynb).
+[notebooks/tutorial.ipynb](https://github.com/lda-over-time/lda-over-time/blob/develop/notebooks/tutorial.ipynb).
 
 
 ## License
 
-`lda-over-time` is distributed under the terms of the [LGPL3](./COPYING).
+`lda-over-time` is distributed under the terms of the 
+[LGPL3](https://github.com/lda-over-time/lda-over-time/blob/develop/COPYING).
 
