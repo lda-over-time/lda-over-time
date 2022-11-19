@@ -1,5 +1,5 @@
 """
-PrevalenceModel is a simpler and faster temporal LDA that returns the \
+TemporalLdaModel is a simpler and faster temporal LDA that returns the \
 proportion of main topics in each time slice.
 
 Its main advantage over other models is that it is fast. But it may not handle \
@@ -20,9 +20,9 @@ import pandas as pd
 from typing import List, Optional
 
 
-class PrevalenceModel(DtmModelInterface):
+class TemporalLdaModel(DtmModelInterface):
     """
-    PrevalenceModel is a simple temporal LDA model, it is faster, but \
+    TemporalLdaModel is a simple temporal LDA model, it is faster, but \
     it may not handle well the evolution of topics (because the vocabulary \
     used in a certain topic may vary over time).
 
@@ -57,6 +57,12 @@ class PrevalenceModel(DtmModelInterface):
     use the total number of threads on running machine.
     :type workers: int, optional
 
+    :param aggregator: Specifies how to aggregate all documents in time slice \
+    and calculate its proportions. It can be either `average` to calculate the \
+    average of topic's weights for each time slice or the proportion of `main` \
+    topics in each time slice. Default is `average`.
+    :type aggregator: str, optional
+
     :return: Nothing
     :rtype: None
 
@@ -72,7 +78,8 @@ class PrevalenceModel(DtmModelInterface):
                  freq: str,
                  n_topics: int = 100,
                  sep: Optional[str] = None,
-                 workers: Optional[int] = None):
+                 workers: Optional[int] = None,
+                 aggregator: str = 'average'):
         """
         I initialize the variables to train model.
         """
@@ -83,6 +90,7 @@ class PrevalenceModel(DtmModelInterface):
         self.freq = freq
         self.n_topics = n_topics
         self.sep = sep
+        self.aggregator = aggregator
 
         # get number of parallel workers
         self.workers = workers if isinstance(workers, int) else cpu_count()
@@ -142,11 +150,11 @@ class PrevalenceModel(DtmModelInterface):
         return dictionary, corpus_bow
 
 
-    def __prepare_model_to_prevalence(self,
-                                      dates,
-                                      date_format,
-                                      normalized_model,
-                                      n_topics):
+    def __extract_main_topics(self,
+                              dates,
+                              date_format,
+                              normalized_model,
+                              n_topics):
         """
         This method prepares the model to make a prevalence analysis over the \
         lda model. For this, it will create a table with two columns: one for \
@@ -330,7 +338,7 @@ class PrevalenceModel(DtmModelInterface):
         :return: It should return the number of time slices found in corpus. \
         :rtype: int
         """
-        return self.grouped_by_frequency.ngroups
+        return len(self.id_to_timestamp)
 
 
     def get_results(self):
@@ -416,23 +424,48 @@ class PrevalenceModel(DtmModelInterface):
         self.normalized = self.__normalize_lda_model(self.bow,
                                                      self.lda_model)
 
-        # prepare model to prevalence analysis
-        self.docs_date_main_topic = \
-                self.__prepare_model_to_prevalence(self.dates,
-                                                   self.date_format,
-                                                   self.normalized,
-                                                   self.n_topics)
-        # group documents by date
-        self.grouped_by_frequency = \
-                self.docs_date_main_topic.groupby(pd.Grouper(key='date',
-                                                             freq=self.freq),
-                                                  sort=True)
+        # aggregate is `average`: calculate average
+        if self.aggregator == 'average':
 
-        # calculate temporal lda model
-        self.temporal_lda_model = \
-                self.__train_prevalence(self.docs_date_main_topic,
-                                        self.freq,
-                                        self.grouped_by_frequency)
+            # add dates to normalized data
+            self.normalized['date'] = pd.to_datetime(
+                    self.dates,
+                    format=self.date_format
+            )
+
+            # group by frequency and calculate average
+            self.temporal_lda_model = self.normalized.groupby(
+                    [pd.Grouper(key='date', freq=self.freq)],
+                    sort=True
+            ).mean().reset_index()
+
+        # aggregator is `main`: calculate proportion of main topics
+        elif self.aggregator == 'main':
+
+            # prepare model to prevalence analysis
+            self.docs_date_main_topic = \
+                    self.__extract_main_topics(self.dates,
+                                               self.date_format,
+                                               self.normalized,
+                                               self.n_topics)
+            # group documents by date
+            self.grouped_by_frequency = \
+                    self.docs_date_main_topic.groupby(pd.Grouper(key='date',
+                                                                 freq=self.freq),
+                                                      sort=True)
+
+            # calculate temporal lda model
+            self.temporal_lda_model = \
+                    self.__train_prevalence(self.docs_date_main_topic,
+                                            self.freq,
+                                            self.grouped_by_frequency)
+
+        # unknown option: raise error
+        else:
+            raise ValueError(
+                    f"Option \"{self.aggregator}\" does not exist. "
+                    "Valid options are 'average' and 'main'"
+            )
 
         # get the list of timestamps
         self.id_to_timestamp, self.timestamp_to_corpus = \
