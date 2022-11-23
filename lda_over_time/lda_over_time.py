@@ -8,6 +8,7 @@ study how much and why one certain topic is more or less discussed in a \
 time slice.
 """
 # IMPORTS
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
@@ -77,13 +78,16 @@ class LdaOverTime:
             )
             self.topics_names.append(words)
 
+        # Default name is top 10 words
+        self.rename_topics(self.topics_names)
+
 
     def __get_results(self):
         # extract results that will be used to plot model
         results = self.model.get_results()
 
         # get weights of each topic over time
-        weights = results[list(range(self.n_topics))]
+        weights = results[list(range(self.n_topics))].copy()
 
         # get dates
         dates = results['date'].dt.date.values
@@ -95,11 +99,15 @@ class LdaOverTime:
     def plot(self,
              title: str,
              legend_title: Optional[str] = None,
-             topic_names: Optional[List[str]] = None,
              path_to_save: Optional[str] = None,
-             display: bool = True):
+             rotation: int = 90,
+             mode: str = "line",
+             display: bool = True,
+             date_format: Optional[str] = None):
         """
         Plot the evolution of topics over time.
+
+        To rename topics' names, use method `rename_topics`.
 
         :param title: title of plot
         :type title: str
@@ -107,40 +115,72 @@ class LdaOverTime:
         :param legend_title: legend's title
         :type legend_title: str, optional
 
-        :param topic_names: custom names for each topic. If not provided, it \
-        will be the top 10 words for each topic.
-        :type topic_names: list[str], optional
-
         :param path_to_save: set it with path to save the graph. Default \
         behaviour does not save the graph.
         :type path_to_save: str, optional
+
+        :param rotation: value in degrees to rotate horizontal labels. Default \
+        is 90.
+        :type rotation: int, optional
+
+        :param mode: type of plotting. It can be either a simple `line` plot \
+        or `stack` plot. Default is `line`.
+        :type mode: str, optional
 
         :param display: set it to False to not display graph. Default \
         behaviour is to display.
         :type display: bool, optional
 
+        :param date_format: date format to be displayed
+        :type date_format: str, optional
+
         :return: Nothing
         :rtype: None
         """
-        # Custom topic names were not provided: set default value (top 10 words)
-        if topic_names is None:
-            topic_names = self.topics_names
+        # Plot lines
+        if mode == "line":
+            g = sns.lineplot(data=self.weights)
+            g.set_xticks(range(len(self.dates)))
+            plt.legend(title=legend_title,
+                       bbox_to_anchor=(1,1),
+                       loc="upper left")
 
-        # TODO: find a way of setting label names without breaking markers
-        # Topic names has the right length: set new column names
-        if self.weights.shape[1] == len(topic_names):
-            self.weights.columns = topic_names
+            # date_format was not provided: print with self.date_format
+            if date_format is None:
+                g.set_xticklabels(labels=self.dates, rotation=rotation)
 
-        # Plot
-        g = sns.lineplot(data=self.weights)
-        g.set_xticks(range(len(self.dates)))
-        g.set_xticklabels(labels=self.dates, rotation=30)
+            # date_format was provided: print with custom labels
+            else:
+                g.set_xticklabels(
+                        labels=[
+                            date.strftime(date_format)
+                                for date in self.dates
+                        ],
+                        rotation=rotation
+                )
+
+        # Plot stacks
+        elif mode == "stack":
+            y = [self.weights[col] for col in self.weights.columns]
+            sns.set_theme()
+            _, ax = plt.subplots()
+            ax.stackplot(self.dates, *y)
+            ax.legend(labels=self.weights.columns,
+                       title=legend_title,
+                       bbox_to_anchor=(1,1),
+                       loc="upper left")
+            plt.xticks(rotation=rotation)
+
+            # Set custom date format if provided
+            if date_format is not None:
+                ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
+                ax.xaxis.set_minor_formatter(mdates.DateFormatter(date_format))
+
+        # Unknown plot
+        else:
+            raise ValueError(f"There is no option `mode = {mode}`")
 
         plt.title(title)
-
-        plt.legend(title=legend_title,
-                   bbox_to_anchor=(1,1),
-                   loc="upper left")
 
         # Path was given: save plot in path
         if isinstance(path_to_save, str):
@@ -252,8 +292,47 @@ class LdaOverTime:
         results = self.model.get_results()
 
         # Change columns to number topics from 1 to n_topics
-        results.columns = list(range(1, self.n_topics + 1)) + ['date']
+        results.rename(
+            columns={
+                i: i + 1
+                    for i in range(self.n_topics)
+            },
+            inplace=True
+        )
 
         # Return table
         return results
+
+
+    def rename_topics(self, new_names: List[str]):
+        """
+        Rename topic's names with the list with new names.
+
+        It will rename based on the given order, that is the first name will \
+        overwrite the first topic, the second will overwrite second topic, and \
+        so on.
+
+        The length should be equal to number of topics, otherwise it will \
+        raise ValueError.
+
+        :param new_names: List with new names to overwrite the topics' names
+        :type new_names: list[str]
+
+        :return: Nothing
+        :rtype: None
+
+        :raises ValueError: when the given list's length does not match with \
+        the number of topics.
+        """
+        # Raise exception if length does not match with number of topics
+        if len(new_names) != self.n_topics:
+            raise ValueError(
+                    f'The given list should have length {self.n_topics}.'
+            )
+
+        # Map older names to new names
+        renaming = dict(zip(self.weights.columns, new_names))
+
+        # Rename weights' columns
+        self.weights.rename(columns=renaming, inplace=True)
 
