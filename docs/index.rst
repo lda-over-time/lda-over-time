@@ -3,14 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to lda-over-time's documentation!
-=========================================
+Welcome to LdaOverTime's documentation!
+=======================================
 
 .. toctree::
    :maxdepth: 8
    :caption: Contents:
 
    modules
+
+   dev
 
 
 

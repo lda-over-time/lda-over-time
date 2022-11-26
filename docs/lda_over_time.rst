@@ -1,29 +1,10 @@
-lda\_over\_time package
-=======================
+Core
+====
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   lda_over_time.models
-
-Submodules
-----------
-
-lda\_over\_time.lda\_over\_time module
---------------------------------------
+lda\_over\_time.lda\_over\_time
+-------------------------------
 
 .. automodule:: lda_over_time.lda_over_time
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: lda_over_time
    :members:
    :undoc-members:
    :show-inheritance:
