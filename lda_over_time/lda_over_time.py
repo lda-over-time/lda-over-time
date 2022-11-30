@@ -184,7 +184,7 @@ class LdaOverTime:
 
         # Path was given: save plot in path
         if isinstance(path_to_save, str):
-            plt.savefig(path_to_save)
+            plt.savefig(path_to_save, bbox_inches="tight")
 
         # Set to display: display plot
         if display is True:
